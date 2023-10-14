@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -18,10 +20,14 @@ class _NewItemState extends State<NewItem> {
   var _enteredName = '';
   var _enteredQuantity = 0;
   var _selectedCategory = categories[Categories.vegetables]!;
+  var _isSending = false;
 
   void _saveItems() async {
     if (_formkey.currentState!.validate()) {
       _formkey.currentState!.save();
+      setState(() {
+        _isSending = true;
+      });
       final url = Uri.https('shoping-list-2641f-default-rtdb.firebaseio.com',
           'shopping-list.json');
 
@@ -37,6 +43,7 @@ class _NewItemState extends State<NewItem> {
 
       final resData = json.decode(response.body);
       print(response.statusCode);
+      // ignore: use_build_context_synchronously
       if (!context.mounted) {
         return;
       }
@@ -83,11 +90,12 @@ class _NewItemState extends State<NewItem> {
                 children: [
                   Expanded(
                     child: TextFormField(
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         label: Text('Quantity'),
                       ),
                       keyboardType: TextInputType.number,
                       initialValue: _enteredQuantity.toString(),
+                      
                       validator: (Value) {
                         if (Value == null ||
                             Value.isEmpty ||
@@ -108,6 +116,7 @@ class _NewItemState extends State<NewItem> {
                   Expanded(
                     child: DropdownButtonFormField(
                         items: [
+                          
                           for (final Category in categories.entries)
                             DropdownMenuItem(
                               value: Category.value,
@@ -137,12 +146,21 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                      onPressed: () {
-                        _formkey.currentState!.reset();
-                      },
+                      onPressed: _isSending
+                          ? null
+                          : () {
+                              _formkey.currentState!.reset();
+                            },
                       child: const Text('Reset')),
                   ElevatedButton(
-                      onPressed: _saveItems, child: const Text('Add Items'))
+                      onPressed: _isSending ? null : _saveItems,
+                      child: _isSending
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(),
+                            )
+                          : const Text('Add Items'))
                 ],
               )
             ],
